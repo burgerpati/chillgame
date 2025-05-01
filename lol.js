@@ -1,125 +1,135 @@
-let playerX = 0;
-let playerY = 0;
-let moves = 0;
-let inventory = [];
-const creepyMessages = [
-  "You feel like you've been here before...",
-  "A whisper says your name, but no one’s there.",
-  "The air gets colder.",
-  "You hear footsteps... but you're alone.",
-  "The walls seem closer than before.",
-  "Something is watching."
-];
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const maze = {
-  "0,0": {
-    description: "You are in a cold, damp cell. There's a key on the floor.",
-    exits: ["east", "south"],
-    item: "rusty key"
-  },
-  "1,0": {
-    description: "A long hallway. The light flickers.",
-    exits: ["west", "east"],
-    item: null
-  },
-  "2,0": {
-    description: "A room with red writing on the wall: 'NO ESCAPE'.",
-    exits: ["west", "south"],
-    item: "strange note"
-  },
-  "0,1": {
-    description: "You enter a dusty library. Books whisper as you pass.",
-    exits: ["north", "south"],
-    item: null
-  },
-  "1,1": {
-    description: "A mirror shows your reflection... but it’s smiling.",
-    exits: ["north", "south", "east", "west"],
-    item: null
-  },
-  "2,1": {
-    description: "A broken door. Something banged from the other side.",
-    exits: ["north", "south", "west"],
-    item: "old key"
-  },
-  "0,2": {
-    description: "The room smells like burnt hair. You feel dizzy.",
-    exits: ["north", "east"],
-    item: null
-  },
-  "1,2": {
-    description: "A bloodstained floor. You feel watched.",
-    exits: ["north", "west", "east"],
-    item: null
-  },
-  "2,2": {
-    description: "A dark exit... but is it real?",
-    exits: ["north", "west"],
-    item: null,
-    ending: true
-  }
+const player = {
+  x: 50,
+  y: 300,
+  width: 40,
+  height: 40,
+  dx: 0,
+  dy: 0,
+  gravity: 0.8,
+  jumpPower: -12,
+  grounded: false,
 };
 
-function getRoomKey(x, y) {
-  return `${x},${y}`;
+const keys = {};
+const platforms = [
+  { x: 0, y: 350, width: 800, height: 50 },
+  { x: 200, y: 280, width: 100, height: 10 },
+  { x: 400, y: 240, width: 120, height: 10 },
+  { x: 600, y: 200, width: 100, height: 10 },
+];
+
+let coins = [
+  { x: 220, y: 250, collected: false },
+  { x: 620, y: 170, collected: false },
+];
+
+let weirdness = 0;
+
+function drawPlayer() {
+  ctx.fillStyle = weirdness > 10 ? "#ff0000" : "#ffffff";
+  ctx.fillRect(player.x, player.y, player.width, player.height);
 }
 
-function updateRoom() {
-  const key = getRoomKey(playerX, playerY);
-  const room = maze[key];
-  const desc = room ? room.description : "You hit a wall. There's nothing here.";
-  document.getElementById("description").textContent = desc;
+function drawPlatforms() {
+  ctx.fillStyle = "#654321";
+  platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+}
 
-  // Handle item pickup
-  if (room?.item) {
-    inventory.push(room.item);
-    document.getElementById("inventory").textContent = inventory.join(", ");
-    room.item = null;
+function drawCoins() {
+  coins.forEach(c => {
+    if (!c.collected) {
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = weirdness > 5 ? "#f0f" : "gold";
+      ctx.fill();
+    }
+  });
+}
+
+function checkPlatformCollision() {
+  player.grounded = false;
+  platforms.forEach(p => {
+    if (
+      player.x < p.x + p.width &&
+      player.x + player.width > p.x &&
+      player.y + player.height < p.y + 10 &&
+      player.y + player.height + player.dy >= p.y
+    ) {
+      player.dy = 0;
+      player.y = p.y - player.height;
+      player.grounded = true;
+    }
+  });
+}
+
+function checkCoinCollision() {
+  coins.forEach(c => {
+    if (
+      !c.collected &&
+      player.x < c.x + 10 &&
+      player.x + player.width > c.x - 10 &&
+      player.y < c.y + 10 &&
+      player.y + player.height > c.y - 10
+    ) {
+      c.collected = true;
+      weirdness++;
+      if (weirdness === 3) {
+        alert("That coin felt... wrong.");
+      }
+    }
+  });
+}
+
+function update() {
+  player.dx = 0;
+  if (keys["ArrowLeft"]) player.dx = -5;
+  if (keys["ArrowRight"]) player.dx = 5;
+
+  if (keys["Space"] && player.grounded) {
+    player.dy = player.jumpPower;
+    player.grounded = false;
   }
 
-  // Creepy messages
-  moves++;
-  if (moves % 3 === 0) {
-    const msg = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
-    document.getElementById("creepy-message").textContent = msg;
-  } else {
-    document.getElementById("creepy-message").textContent = "";
-  }
+  player.dy += player.gravity;
+  player.x += player.dx;
+  player.y += player.dy;
 
-  // Endgame
-  if (room?.ending && inventory.includes("rusty key") && inventory.includes("old key")) {
-    document.getElementById("description").textContent =
-      "You unlock the final door with both keys... and step into darkness. You escaped?";
-    document.getElementById("controls").innerHTML =
-      "<button onclick='location.reload()'>Play Again</button>";
+  checkPlatformCollision();
+  checkCoinCollision();
+
+  // Keep player in bounds
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+  if (player.y > canvas.height) {
+    alert("You fell... but where did you go?");
+    location.reload();
   }
 }
 
-function move(dir) {
-  const key = getRoomKey(playerX, playerY);
-  const room = maze[key];
-  if (!room || !room.exits.includes(dir)) {
-    document.getElementById("creepy-message").textContent = "You can't go that way.";
-    return;
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawPlatforms();
+  drawCoins();
+  drawPlayer();
+  if (weirdness > 7) {
+    ctx.fillStyle = "rgba(255,0,0,0.2)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.font = "20px monospace";
+    ctx.fillText("You're not supposed to be here.", 200, 100);
   }
-
-  switch (dir) {
-    case "north":
-      playerY--;
-      break;
-    case "south":
-      playerY++;
-      break;
-    case "east":
-      playerX++;
-      break;
-    case "west":
-      playerX--;
-      break;
-  }
-
-  updateRoom();
 }
 
-// Start game
-updateRoom();
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+gameLoop();
