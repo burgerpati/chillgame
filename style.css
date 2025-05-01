@@ -1,31 +1,11 @@
 body {
+  margin: 0;
   background-color: black;
-  color: white;
-  font-family: 'Courier New', Courier, monospace;
-  text-align: center;
-  padding: 50px;
+  overflow: hidden;
 }
-
-#game {
-  max-width: 600px;
+canvas {
+  display: block;
   margin: auto;
-  border: 1px solid red;
-  padding: 20px;
-  background-color: #111;
-}
-
-button {
-  margin: 5px;
-  padding: 10px 20px;
-  background-color: darkred;
-  color: white;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-#creepy-message {
-  color: crimson;
-  font-style: italic;
-  margin-top: 15px;
+  border: 2px solid white;
+  background-color: #88ccff;
 }
