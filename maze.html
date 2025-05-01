@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Maze of the Mind</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game">
+    <h1>Maze of the Mind</h1>
+    <div id="info">
+      <p id="description"></p>
+      <p id="creepy-message"></p>
+      <p><strong>Inventory:</strong> <span id="inventory">None</span></p>
+    </div>
+
+    <div id="controls">
+      <button onclick="move('north')">⬆️ North</button><br>
+      <button onclick="move('west')">⬅️ West</button>
+      <button onclick="move('east')">➡️ East</button><br>
+      <button onclick="move('south')">⬇️ South</button>
+    </div>
+  </div>
+  <script src="lol.js"></script>
+</body>
+</html>
